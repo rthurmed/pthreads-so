@@ -3,7 +3,12 @@
 #include <pthread.h>
 
 void *primo(void *args) {
-	// Thread 0: O número 1 é primo
+	int id = 0; // Vai receber dos argumentos
+	int valor = 3; // Vai pegar do espaço compartilhado
+	int i = 2;
+    while (i < valor && valor%i != 0) i++;
+    if(i == valor) printf("Thread %d: O número %d é primo.\n", id, valor);
+    else printf("Thread %d: O número %d não é primo.\n", id, valor);
 }
 
 int main () {
