@@ -9,10 +9,11 @@
 
 pthread_mutex_t lock;
 
-int n_primos = 0;
-int atual = 1;
-int max = 10;
-int qtd_threads = 0;
+int atual = 1; 			// Topo da fila de números
+int max = 10; 			// Quantidade de números que serão testados
+int qtd_threads = 0; 	// Quantidade de threads definidas
+int qtd_execs = 0; 		// Quantidade de execuções
+int n_primos = 0;		// Quantidade de números primos encontrados
 
 int primo(int value) {
 	int i = 2;
@@ -23,19 +24,34 @@ int primo(int value) {
 void *thread_fn(void *threadid) {
 	int *id = (int*) threadid; // Vem como argumento da thread
 	int valor = 0; // Pega do espaço compartilhado
+	int res = 0;
 	while (atual <= max) {
+		// Tranca o mutex, pega um valor para calcular e soma
+		// para a próxima thread executar o próximo numero
 		pthread_mutex_lock(&lock);
 		valor = atual;
 		atual++;
 		pthread_mutex_unlock(&lock);
-		if(primo(valor)) {
+
+		// Calcula se é primo ou não e imprime o texto respectivo
+		res = primo(valor);
+		if(res) {
 			printf("Thread %d: O número %d é primo.\n", *id, valor);
-			pthread_mutex_lock(&lock);
-			n_primos++;
-			pthread_mutex_unlock(&lock);
 		} else {
 			printf("Thread %d: O número %d não é primo.\n", *id, valor);
 		}
+
+		// Soma no contador de execuções e caso seja primo soma no
+		// contador de primos também 
+		pthread_mutex_lock(&lock);
+		if(res) {
+			n_primos++;
+		}
+		qtd_execs++;
+		pthread_mutex_unlock(&lock);
+
+		// Espera até as outras threads executarem
+		while (atual <= max && qtd_execs < valor + qtd_threads -1);
 	}
 }
 
@@ -68,6 +84,6 @@ int main () {
 	
 	pthread_mutex_destroy(&lock);
 	
-	printf("O número total de números primos encontrados foi: %d", n_primos);
+	printf("O número total de números primos encontrados foi: %d\n", n_primos);
 	return 1;
 }
